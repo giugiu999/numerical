@@ -1,0 +1,116 @@
+% Sample script  that shows how to automate running problem solutions
+close all;
+clear;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% a) Load an image using the imread command 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+I=imread("peppers3.tif");
+% b) Display original image in the first spot of a 2 x 3 a grid layout
+%    Check the imshow and subplot commands.
+figure; %open new window
+subplot(2,3,1);
+imshow(I);%check
+title("Original peppers image");
+pause();
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% c) Display a gray scale version of the image in position 2 of the grid.
+%    help rgb2gray
+gray=rgb2gray(I);
+subplot(2,3,2);
+imshow(gray);
+title("Greyscale peppers image");
+pause();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% d) Generate a new figure and ask user to manually select a region of the
+%    image. Display the subimage in position 3 of the grid.
+%    Hint 1: getrect()
+%    Hint 2: to use getrect, you should first install Image Processing Toolbox:
+%         (a) Open the Add-On Manager in MATLAB via "Home > Add-Ons > Get Add-Ons" and install the Add-On Explorer if it is not already installed.
+%         (b) Search "Image Processing Toolbox" and install it.
+%         (c) Restart MATLAB after installing
+figure;
+subplot(2,3,3);
+imshow(I);
+title("Selected region");
+
+% Get user input on a newly dislayed image
+rect = getrect(); %float,[row,col,w,h]
+% Make grid the current figure
+x=round(rect(1)); %change to int，col
+y=round(rect(2)); %row
+w=round(rect(3));%col range
+h=round(rect(4));%row range
+x_=min(x+w,size(I,2));
+y_=min(y+h,size(I,1));
+% Display selected region. Make sure to apply the cut
+% over all 3 channels.
+si = I(y:y_, x:x_, :);
+subplot(2,3,3);
+imshow(si);
+title('Selected Region');
+% You are NOT ALLOWED to use the imcrop function of Matlab.
+
+pause();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% e) Create a function J = luminance_change(I, option, value) such that:
+%   * When given the option 'c', the contrast of image I's top-left and 
+%     bottom-right quadrants will be modified by the given value.
+%     Simple multiplication will achieve this.
+%   * When given the option 'b', the brightness of image I's top-right and 
+%     bottom-left quadrants will be modified by the given value.
+%     Simple addition will achieve this.
+%  
+%   Showcase your function by filling positions 4 and 5 in the grid
+
+%create function
+function J = luminance_change(I, option, value)
+    J = I; 
+    [r, c, ~] = size(I); % row&col
+
+    mid_r = floor(r / 2);
+    mid_c = floor(c / 2);
+    if option == 'c'
+        % left upper(1:mid_r, 1:mid_c); right bottom(mid_r+1:end, mid_c+1:end)
+        J(1:mid_r, 1:mid_c, :) = uint8(double(J(1:mid_r, 1:mid_c, :)) * value);
+        J(mid_r+1:end, mid_c+1:end, :) = uint8(double(J(mid_r+1:end, mid_c+1:end, :)) * value);
+    end
+
+    % 修改亮度
+    if option == 'b'
+        % 右上象限 (1:mid_r, mid_c+1:end) 和 左下象限 (mid_r+1:end, 1:mid_c)
+        J(1:mid_r, mid_c+1:end, :) = J(1:mid_r, mid_c+1:end, :) + value;
+        J(mid_r+1:end, 1:mid_c, :) = J(mid_r+1:end, 1:mid_c, :) + value;
+    end
+
+    % 防止溢出，确保像素值在 [0, 255] 范围内
+    J = min(max(J, 0), 255);
+end
+
+
+% Contrast change
+J1 = luminance_change(I, 'c', 1.5);
+subplot(2,3,4);
+imshow(J1);
+title("Reduced Contrast");
+pause();
+
+% Brightness change
+J2=luminance_change(I,'b',50);
+subplot(2,3,5);
+imshow(J2);
+title("Increased Brightness");
+pause();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% f) [Extra question for curiosity, no points]: 
+% Display a version of the image after it's been blurred using a
+% Gaussian filter. Hint: imgaussfilt()
+end
